@@ -8,10 +8,14 @@ export interface GithubMcpConfig {
   repo: string | null;
   /** Optional. Null means the repository's default branch. */
   branch: string | null;
+  /** Any MCP endpoint speaking Streamable HTTP — not GitHub-specific. */
   mcpUrl: string;
 }
 
-/** GitHub's hosted MCP server. Point elsewhere to use a local one. */
+/**
+ * GitHub's *hosted* MCP server. Nothing runs locally: this is a remote
+ * endpoint, so the only prerequisite is a token.
+ */
 const DEFAULT_MCP_URL = 'https://api.githubcopilot.com/mcp/';
 
 function readOptional(raw: string | undefined): string | null {
@@ -34,7 +38,11 @@ export const githubConfig: GithubMcpConfig = {
   owner: readOptional(process.env['GITHUB_OWNER']),
   repo: readOptional(process.env['GITHUB_REPO']),
   branch: readOptional(process.env['GITHUB_BRANCH']),
-  mcpUrl: readOptional(process.env['GITHUB_MCP_URL']) ?? DEFAULT_MCP_URL,
+  // Named MCP_SERVER_URL rather than GITHUB_MCP_URL: it points at an MCP
+  // endpoint, which is the swappable part. Only the Streamable HTTP transport
+  // is supported, so there is deliberately no MCP_TRANSPORT setting — it would
+  // accept exactly one value and imply flexibility that does not exist.
+  mcpUrl: readOptional(process.env['MCP_SERVER_URL']) ?? DEFAULT_MCP_URL,
 };
 
 /** Enabled *and* has everything it needs to actually make a call. */

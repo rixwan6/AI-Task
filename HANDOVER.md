@@ -657,6 +657,12 @@ Groq, OpenRouter, Together, Fireworks, Cerebras, SiliconFlow, and local runtimes
 
 ## 8. GitHub MCP integration (optional)
 
+> ### ⚠️ Nothing runs locally
+>
+> This integration talks to a **remote, GitHub-hosted MCP server**. There is **no MCP process to install, start, or manage** — no Docker, no subprocess, no background service. A GitHub token is the only prerequisite.
+>
+> If you are looking for "how do I start the MCP server", the answer is: you don't.
+
 **Off by default.** With `MCP_ENABLED` unset, the app behaves exactly as it does without any of this: the GitHub panel does not render, and the standup flow never calls it. You can delete `server/src/mcp/` and remove two imports and everything else still works.
 
 ### What MCP is
@@ -726,15 +732,26 @@ The connection is a **lazy singleton**: the handshake is per-session, so opening
 - `list_pull_requests` takes `state: 'open'` (lowercase) but `list_issues` takes `state: 'OPEN'` (uppercase) — the latter is GraphQL-backed
 - `search_repositories` defaults to `minimal_output: true`, which strips the fields the repository view needs
 
-### How to start the MCP server
+### Transports, and why nothing runs locally
 
-**You don't.** `GITHUB_MCP_URL` defaults to GitHub's hosted server, so a token is the only prerequisite — nothing to install or run.
+The [MCP specification](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports) defines exactly **two** standard transports:
 
-To use a local server instead, run the official image and repoint the URL. No code changes:
+| Transport | How it works | Local or remote |
+|---|---|---|
+| **stdio** | "The client launches the MCP server as a subprocess" and talks over stdin/stdout | **Local by definition** — requires a process on your machine |
+| **Streamable HTTP** | "The server operates as an independent process that can handle multiple client connections", over HTTP POST/GET | **Remote** — the production transport |
 
-```bash
-docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=<token> ghcr.io/github/github-mcp-server
-```
+**This project uses Streamable HTTP exclusively.** `github.client.ts` imports `StreamableHTTPClientTransport`; there is no `StdioClientTransport`, no `spawn`, and no `child_process` anywhere in the codebase.
+
+Streamable HTTP replaced the older **HTTP+SSE** transport (protocol version 2024-11-05), which the spec now marks deprecated. If you find a tutorial using `SSEClientTransport`, it is targeting the old revision.
+
+**There is no `MCP_TRANSPORT` setting, deliberately.** Only one transport is supported, so the variable would accept exactly one value — config that advertises flexibility the code does not have, and the next developer would reasonably try `stdio` and get silence.
+
+#### If you ever *did* need a local server
+
+Not required, and not how this project is configured — noted only for completeness. Some MCP servers ship stdio-only. The spec-compliant way to consume one remotely is to host it behind a gateway that exposes Streamable HTTP, **not** to wrap it in a bespoke REST API: custom transports "**MUST** preserve the JSON-RPC message format and lifecycle", and a REST wrapper discards the interoperability that makes MCP worth using.
+
+GitHub does publish a local image (`ghcr.io/github/github-mcp-server`) for people who want one. Pointing `MCP_SERVER_URL` at it would work without code changes — but you do not need it, and using it would reintroduce exactly the local dependency this design avoids.
 
 ### How to verify it works
 
@@ -742,10 +759,17 @@ docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=<token> ghcr.io/github/github
 curl http://localhost:3000/api/github/status
 ```
 
+Real response from a working setup:
+
 ```json
 {"success":true,"data":{"enabled":true,"configured":true,"connected":true,
- "owner":"you","repo":"your-repo","toolCount":42,"message":"Connected. 42 tools available."}}
+ "owner":"your-user","repo":"your-repo","branch":null,
+ "toolCount":44,"message":"Connected. 44 tools available."}}
 ```
+
+`toolCount: 44` is the payoff of `tools/list` — the remote server told us what it can do. A REST client has no equivalent; you would have to know the endpoints in advance.
+
+**Confirmed:** the remote endpoint accepts a plain classic PAT. **No GitHub Copilot licence is required**, despite the `api.githubcopilot.com` hostname.
 
 The three booleans are deliberately separate so a failure tells you *which* step broke:
 
@@ -801,7 +825,7 @@ cp .env.example .env      # PowerShell: Copy-Item .env.example .env
 | `GITHUB_OWNER` | Only if enabled | `your_github_username` | Repo owner. Never taken from the client | `mcp/github.service.ts` |
 | `GITHUB_REPO` | Only if enabled | `your_repository_name` | Repo name. Never taken from the client | `mcp/github.service.ts` |
 | `GITHUB_BRANCH` | No | *(blank)* | Branch for commits; blank means the default | `mcp/github.service.ts` |
-| `GITHUB_MCP_URL` | No — defaults GitHub's | `https://api.githubcopilot.com/mcp/` | MCP endpoint; repoint for a local server | `mcp/github.client.ts` |
+| `MCP_SERVER_URL` | No — defaults GitHub's hosted server | `https://api.githubcopilot.com/mcp/` | **Remote** MCP endpoint. Named for MCP, not GitHub, because this is the swappable part | `mcp/github.client.ts` |
 
 **Every variable is optional.** With no `.env` at all the server boots on port 3000 using the mock summariser — a new developer can clone and run with zero configuration.
 
@@ -1244,7 +1268,7 @@ If summaries are mock but you expected AI, check `/api/health` **first** — it 
 | `configured: false` | `message` names the missing variables | Set `GITHUB_TOKEN` / `GITHUB_OWNER` / `GITHUB_REPO` |
 | `connected: false`, message mentions `401` | Bad or expired token | Regenerate at <https://github.com/settings/tokens> |
 | `connected: false`, message mentions `404` | Repo not found, or token lacks access | Check owner/repo spelling; a private repo needs `repo` scope, not `public_repo` |
-| `connected: false`, timeout | MCP server unreachable | Check network and `GITHUB_MCP_URL` |
+| `connected: false`, timeout | Remote MCP endpoint unreachable | Check network and `MCP_SERVER_URL`. Nothing runs locally, so this is never "did I start the server" |
 | Panel shows, lists are empty | Connected but the repo genuinely has none | Confirm against github.com |
 | `502` from a data route | The MCP call failed after connecting | Reason is in the server log; commonly a rate limit (`403`/`429`) |
 
@@ -1411,7 +1435,10 @@ An open standard — JSON-RPC 2.0 with a defined lifecycle — that lets an appl
 *(Answer this honestly — it is the obvious challenge and a canned answer sounds rehearsed.)* For the four lists we display, REST would genuinely be lighter: no SDK, one hop instead of two, and typed JSON instead of JSON encoded inside a text block. MCP earns its place three ways — one client covers ~40 tools with no per-endpoint wrapper, `tools/list` returns schemas you can hand straight to a model, and swapping GitHub for GitLab is config rather than code. It is the right foundation once the LLM chooses what to fetch. Knowing when a technology is *not* warranted matters as much as knowing how to use it.
 
 **How does your backend talk to the MCP server?**
-JSON-RPC over Streamable HTTP. `initialize` handshake with the PAT as a bearer token, then `tools/list` to discover capabilities, then `tools/call`. The connection is a lazy singleton because the handshake is per-session — one per request would add a round trip to every call.
+JSON-RPC over Streamable HTTP to a **remote, GitHub-hosted** server — nothing runs locally. `initialize` handshake with the PAT as a bearer token, then `tools/list` to discover capabilities, then `tools/call`. The connection is a lazy singleton because the handshake is per-session — one per request would add a round trip to every call.
+
+**Why Streamable HTTP rather than stdio?**
+stdio is defined by the spec as the client launching the server *as a subprocess*, so it is local by construction — it would mean every developer and every deployment needs a GitHub MCP process running alongside the app. Streamable HTTP is the spec's remote transport: the server runs independently and serves many clients. It also replaced the deprecated HTTP+SSE transport in protocol revision 2025-03-26, so anything you read referencing `SSEClientTransport` is targeting the old spec.
 
 **What happens if the MCP server is down?**
 `/api/github/status` reports `connected: false` with the reason and the panel shows it instead of data. Data routes return `502`. The standup flow is untouched — `getCommitsForContext()` returns an empty array on any failure, so the summary is generated from the notes alone.

@@ -77,7 +77,7 @@ All optional. See `server/.env.example`.
 | `GITHUB_TOKEN` | *(unset)* | GitHub PAT. Required only when `MCP_ENABLED=true`. |
 | `GITHUB_OWNER` / `GITHUB_REPO` | *(unset)* | Which repo to read. Never taken from the client. |
 | `GITHUB_BRANCH` | *(unset)* | Branch for commits; blank means the default branch. |
-| `GITHUB_MCP_URL` | `https://api.githubcopilot.com/mcp/` | MCP server endpoint. |
+| `MCP_SERVER_URL` | `https://api.githubcopilot.com/mcp/` | **Remote** MCP endpoint. Nothing runs locally. |
 
 ---
 
@@ -292,12 +292,16 @@ GITHUB_TOKEN=ghp_your_token_here
 GITHUB_OWNER=your-username
 GITHUB_REPO=your-repo
 GITHUB_BRANCH=
-GITHUB_MCP_URL=https://api.githubcopilot.com/mcp/
+MCP_SERVER_URL=https://api.githubcopilot.com/mcp/
 ```
 
 Create a token at <https://github.com/settings/tokens>. Use the **smallest scope that works** — `public_repo` for a public repository, or a fine-grained token with read-only Contents, Issues, and Pull requests. This feature only reads.
 
-**There is no MCP server to start.** `GITHUB_MCP_URL` points at GitHub's hosted one, so a token is the only prerequisite. To run one locally instead, start `ghcr.io/github/github-mcp-server` and point the URL at it — no code changes.
+**There is no MCP server to install, start, or manage.** `MCP_SERVER_URL` points at GitHub's *remote, hosted* server, so a token is the only prerequisite — no Docker, no subprocess, no background process on your machine.
+
+The MCP specification defines two transports: **stdio** (the client launches the server as a subprocess — inherently local) and **Streamable HTTP** (the server runs independently and serves many clients). This project uses **Streamable HTTP**, the spec's remote transport, which replaced the deprecated HTTP+SSE transport in protocol version 2025-03-26.
+
+Because only that one transport is supported, there is deliberately **no** `MCP_TRANSPORT` setting — it would accept exactly one value and imply flexibility the code does not have.
 
 ### Verifying it
 
@@ -358,7 +362,10 @@ Checked end-to-end during development:
 
 - **A live Groq call with a real key**, returning `summarySource: "ai"`. Given deliberately sloppy input (`"finished the oauth token refresh, reviewed priyas PR on billing"`), the model returned clean prose and corrected `priyas` → *Priya's*, `db creds` → *database credentials*, and `infra` → *infrastructure* — confirming the prompt, model ID, and parameters all work against a real response.
 
-Every path in the AI layer — no key, bad key, and working key — has now been exercised end to end.
+- **The live GitHub MCP integration**, against a real repository: the remote `initialize` handshake succeeded, `tools/list` returned **44 tools**, and all four data endpoints returned real data. A plain classic PAT was sufficient — **no Copilot licence needed**, despite the `api.githubcopilot.com` hostname.
+- **MCP → AI context**, end to end. A standup saying only *"pushed the initial project code"* produced a summary mentioning *"Angular and Node components"* — detail that existed nowhere in the user's text and came from the commit message the MCP server returned.
+
+Every path in the AI layer — no key, bad key, and working key — and every state of the GitHub layer — disabled, unconfigured, and live — has now been exercised end to end.
 
 ---
 
