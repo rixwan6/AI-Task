@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+
+# Runtime datastore — created on first write, not source.
+server/data/
+
+# Angular build cache
+.angular/
+
+.DS_Store
+Thumbs.db

@@ -1,0 +1,21 @@
+<div class="page">
+  <div class="page__column">
+    <app-standup-form
+      [submitting]="submitting"
+      (submitted)="onSubmitted($event)"
+    ></app-standup-form>
+
+    <p class="alert" *ngIf="submitError" role="alert">{{ submitError }}</p>
+
+    <!-- Optional. Renders nothing unless the GitHub MCP integration is on. -->
+    <app-github-panel></app-github-panel>
+  </div>
+
+  <div class="page__column">
+    <app-standup-history
+      [standups]="standups"
+      [loading]="loading"
+      [error]="loadError"
+    ></app-standup-history>
+  </div>
+</div>

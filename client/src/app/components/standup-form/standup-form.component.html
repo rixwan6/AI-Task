@@ -1,0 +1,59 @@
+<form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+  <h2 class="form__title">Today's standup</h2>
+
+  <div class="field">
+    <label class="field__label" for="yesterday">What I did yesterday</label>
+    <textarea
+      id="yesterday"
+      class="field__control"
+      formControlName="yesterday"
+      rows="3"
+      [class.field__control--invalid]="showError('yesterday')"
+      [attr.aria-invalid]="showError('yesterday')"
+      [attr.aria-describedby]="showError('yesterday') ? 'yesterday-error' : null"
+      placeholder="Shipped the login flow, reviewed two PRs&hellip;"
+    ></textarea>
+    <p class="field__error" id="yesterday-error" *ngIf="showError('yesterday')">
+      {{ errorMessage('yesterday', 'Yesterday') }}
+    </p>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="today">What I will do today</label>
+    <textarea
+      id="today"
+      class="field__control"
+      formControlName="today"
+      rows="3"
+      [class.field__control--invalid]="showError('today')"
+      [attr.aria-invalid]="showError('today')"
+      [attr.aria-describedby]="showError('today') ? 'today-error' : null"
+      placeholder="Wire up the payments webhook&hellip;"
+    ></textarea>
+    <p class="field__error" id="today-error" *ngIf="showError('today')">
+      {{ errorMessage('today', 'Today') }}
+    </p>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="blockers">
+      Blockers <span class="field__optional">optional</span>
+    </label>
+    <textarea
+      id="blockers"
+      class="field__control"
+      formControlName="blockers"
+      rows="2"
+      [class.field__control--invalid]="showError('blockers')"
+      [attr.aria-invalid]="showError('blockers')"
+      placeholder="Waiting on staging credentials&hellip;"
+    ></textarea>
+    <p class="field__error" *ngIf="showError('blockers')">
+      {{ errorMessage('blockers', 'Blockers') }}
+    </p>
+  </div>
+
+  <button class="button" type="submit" [disabled]="submitting">
+    {{ submitting ? 'Summarising…' : 'Submit standup' }}
+  </button>
+</form>

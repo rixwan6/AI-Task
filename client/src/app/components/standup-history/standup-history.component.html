@@ -1,0 +1,21 @@
+<section class="history">
+  <h2 class="history__title">
+    History
+    <span class="history__count" *ngIf="standups.length">{{ standups.length }}</span>
+  </h2>
+
+  <p class="state state--loading" *ngIf="loading">Loading previous standups&hellip;</p>
+
+  <p class="state state--error" *ngIf="error && !loading">{{ error }}</p>
+
+  <p class="state state--empty" *ngIf="!loading && !error && !standups.length">
+    No standups yet. Submit one and it will appear here.
+  </p>
+
+  <div class="history__list" *ngIf="!loading && !error">
+    <app-standup-card
+      *ngFor="let standup of standups; trackBy: trackById"
+      [standup]="standup"
+    ></app-standup-card>
+  </div>
+</section>

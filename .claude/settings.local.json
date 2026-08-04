@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ng version *)",
+      "Bash(ng new *)",
+      "Bash(mkdir -p \"D:/Speridian/AI-Smart-Standup-bot/server/src\" && echo \"created\" && ls -la \"D:/Speridian/AI-Smart-Standup-bot\")",
+      "Bash(NG_CLI_ANALYTICS=false ng new client --standalone=false --routing=false --style=scss --ssr=false --skip-git --package-manager=npm)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"--- TYPECHECK EXIT: $? ---\")",
+      "Bash(node -e \"console.log\\('sdk:', require\\('./node_modules/@anthropic-ai/sdk/package.json'\\).version, '| express:', require\\('./node_modules/express/package.json'\\).version\\)\")",
+      "Bash(npm view *)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@anthropic-ai/sdk/package.json'\\).version\\)\")",
+      "Bash(echo \"=== installed: $\\(node -e \"console.log\\(require\\('./node_modules/@anthropic-ai/sdk/package.json'\\).version\\)\"\\) ===\")",
+      "Bash(npx tsx *)",
+      "Bash(npm run *)",
+      "Bash(curl -s --retry 15 --retry-delay 1 --retry-connrefused http://localhost:3000/api/health)",
+      "Bash(curl -s http://localhost:3000/api/standups)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:3000/api/standups -H \"Content-Type: application/json\" -d '{\"yesterday\":\"Shipped the login flow and reviewed two PRs\",\"today\":\"Wire up the payments webhook\",\"blockers\":\"Waiting on staging credentials\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:3000/api/standups -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:3000/api/standups -H \"Content-Type: application/json\" -d '{\"yesterday\":\"   \",\"today\":\"ok\",\"blockers\":42}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:3000/api/standups -H \"Content-Type: application/json\" -d '{not json')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" http://localhost:3000/api/nope)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('count:',j.data.length,'| newest summary:',j.data[0]?.summary?.slice\\(0,40\\)+'...'\\)}\\)\")",
+      "Bash(PORT=3001 ANTHROPIC_API_KEY=\"sk-ant-invalid-key-to-force-failure\" npx tsx src/server.ts)",
+      "Bash(curl -s --retry 15 --retry-delay 1 --retry-connrefused http://localhost:3001/api/health)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:3001/api/standups -H \"Content-Type: application/json\" -d '{\"yesterday\":\"Debugged the flaky integration suite\",\"today\":\"Pair on the search indexer\"}' -m 90)"
+    ]
+  }
+}

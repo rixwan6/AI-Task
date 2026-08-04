@@ -1,0 +1,40 @@
+.history__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  font-size: 1.1rem;
+}
+
+.history__count {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.history__list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.state {
+  margin: 0;
+  padding: 1.5rem 1.25rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.state--error {
+  border-style: solid;
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  text-align: left;
+}

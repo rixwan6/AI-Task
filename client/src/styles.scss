@@ -1,0 +1,53 @@
+/* Design tokens and element resets. Component-specific rules live with their
+   components, where Angular scopes them automatically. */
+
+:root {
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-text: #1a1d23;
+  --color-muted: #5f6672;
+  --color-border: #dfe3e8;
+
+  --color-accent: #2f5fe0;
+  --color-accent-hover: #2449b8;
+  --color-accent-soft: #eef2fd;
+
+  --color-danger: #b3261e;
+  --color-danger-soft: #fdecea;
+
+  --color-warn: #8a5300;
+  --color-warn-soft: #fff4e5;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A single visible focus style, rather than each component inventing its own. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

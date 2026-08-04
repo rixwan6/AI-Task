@@ -1,0 +1,86 @@
+<section class="gh" *ngIf="isVisible">
+  <header class="gh__header">
+    <h2 class="gh__title">GitHub</h2>
+    <span class="gh__repo" *ngIf="status?.connected">{{ repoLabel }}</span>
+    <span class="gh__badge" title="Fetched over the Model Context Protocol">MCP</span>
+  </header>
+
+  <!-- Enabled but not connected: show the diagnostic rather than an empty box. -->
+  <p class="gh__state gh__state--warn" *ngIf="status && !status.connected">
+    {{ status.message }}
+  </p>
+
+  <ng-container *ngIf="status?.connected">
+    <div class="gh__tabs" role="tablist">
+      <button
+        class="gh__tab"
+        type="button"
+        role="tab"
+        [class.gh__tab--active]="activeTab === 'commits'"
+        [attr.aria-selected]="activeTab === 'commits'"
+        (click)="selectTab('commits')"
+      >
+        Commits <span class="gh__count">{{ commits.length }}</span>
+      </button>
+      <button
+        class="gh__tab"
+        type="button"
+        role="tab"
+        [class.gh__tab--active]="activeTab === 'pulls'"
+        [attr.aria-selected]="activeTab === 'pulls'"
+        (click)="selectTab('pulls')"
+      >
+        PRs <span class="gh__count">{{ pullRequests.length }}</span>
+      </button>
+      <button
+        class="gh__tab"
+        type="button"
+        role="tab"
+        [class.gh__tab--active]="activeTab === 'issues'"
+        [attr.aria-selected]="activeTab === 'issues'"
+        (click)="selectTab('issues')"
+      >
+        Issues <span class="gh__count">{{ issues.length }}</span>
+      </button>
+    </div>
+
+    <p class="gh__state" *ngIf="loading">Loading from GitHub&hellip;</p>
+    <p class="gh__state gh__state--warn" *ngIf="error && !loading">{{ error }}</p>
+
+    <ul class="gh__list" *ngIf="!loading && !error && activeTab === 'commits'">
+      <li class="gh__item" *ngFor="let commit of commits; trackBy: trackByUrl">
+        <a class="gh__link" [href]="commit.url" target="_blank" rel="noopener noreferrer">
+          <code class="gh__sha">{{ commit.shortSha }}</code>
+          <span class="gh__text">{{ commit.message }}</span>
+        </a>
+        <span class="gh__meta" *ngIf="commit.author">{{ commit.author }}</span>
+      </li>
+      <li class="gh__empty" *ngIf="!commits.length">No commits found.</li>
+    </ul>
+
+    <ul class="gh__list" *ngIf="!loading && !error && activeTab === 'pulls'">
+      <li class="gh__item" *ngFor="let pr of pullRequests; trackBy: trackByUrl">
+        <a class="gh__link" [href]="pr.url" target="_blank" rel="noopener noreferrer">
+          <code class="gh__sha">#{{ pr.number }}</code>
+          <span class="gh__text">{{ pr.title }}</span>
+        </a>
+        <span class="gh__meta">
+          <span class="gh__draft" *ngIf="pr.isDraft">draft</span>
+          {{ pr.author }}
+        </span>
+      </li>
+      <li class="gh__empty" *ngIf="!pullRequests.length">No open pull requests.</li>
+    </ul>
+
+    <ul class="gh__list" *ngIf="!loading && !error && activeTab === 'issues'">
+      <li class="gh__item" *ngFor="let issue of issues; trackBy: trackByUrl">
+        <a class="gh__link" [href]="issue.url" target="_blank" rel="noopener noreferrer">
+          <code class="gh__sha">#{{ issue.number }}</code>
+          <span class="gh__text">{{ issue.title }}</span>
+        </a>
+        <span class="gh__meta">{{ issue.author }}</span>
+      </li>
+      <li class="gh__empty" *ngIf="!issues.length">No open issues.</li>
+    </ul>
+  </ng-container>
+</section>
